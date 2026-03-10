@@ -1,28 +1,37 @@
 # Usa imagen oficial PHP con Apache
 FROM php:8.2-apache
 
-# Instala dependencias del sistema y extensiones de PHP
+
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
-    unzip \
     git \
     curl \
     libpng-dev \
     libonig-dev \
     libxml2-dev \
-    libpq-dev \
-    && docker-php-ext-install pdo pdo_pgsql pdo_mysql mbstring exif pcntl bcmath gd \
-    && a2enmod rewrite
+    zip \
+    unzip \
+    vim
 
-# Copia solo archivos de Composer primero
-WORKDIR /var/www/html
-COPY composer.json composer.lock ./
-ENV COMPOSER_ALLOW_SUPERUSER 1
-# Ejecuta Composer sin dev y con optimización
-# Forzando memoria ilimitada y emulated prepares
-RUN php -d memory_limit=-1 /usr/bin/composer install --no-dev --optimize-autoloader --prefer-dist
+RUN apt-get update
 
-# Copia el resto del proyecto
-COPY . /var/www/html
+# Clear cache
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Install PHP extensions
+RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+
+# Create system user to run Composer and Artisan Commands
+RUN useradd -G www-data,root -u $uid -d /home/$user $user
+RUN mkdir -p /home/$user/.composer && \
+    chown -R $user:$user /home/$user 
+
+
+# Set working directory
+WORKDIR /var/www
+# Install composer
+COPY --from=composer /usr/bin/composer /usr/bin/composer
+
 
 # Configura permisos
 RUN chown -R www-data:www-data /var/www/html \
