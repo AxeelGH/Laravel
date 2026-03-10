@@ -1,37 +1,38 @@
 # Usa imagen oficial PHP con Apache
 FROM php:8.2-apache
 
+RUN apk update && apk add curl && \
+  curl -sS https://getcomposer.org/installer | php \
+  && chmod +x composer.phar && mv composer.phar /usr/local/bin/composer
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    git \
-    curl \
-    libpng-dev \
-    libonig-dev \
-    libxml2-dev \
-    zip \
-    unzip \
-    vim
+RUN apk --no-cache add --virtual .build-deps $PHPIZE_DEPS \
+  && apk --no-cache add --virtual .ext-deps libmcrypt-dev freetype-dev \
+  libjpeg-turbo-dev libpng-dev libxml2-dev msmtp bash openssl-dev pkgconfig \
+  && docker-php-source extract \
+  && docker-php-ext-configure gd --with-freetype-dir=/usr/include/ \
+                                   --with-png-dir=/usr/include/ \
+                                   --with-jpeg-dir=/usr/include/ \
+  && docker-php-ext-install gd mcrypt mysqli pdo pdo_mysql zip opcache \
+  && pecl install mongodb redis xdebug \
+  && docker-php-ext-enable mongodb \
+  && docker-php-ext-enable redis \
+  && docker-php-ext-enable xdebug \
+  && docker-php-source delete \
+  && apk del .build-deps
 
-RUN apt-get update
+WORKDIR /var/www/html
 
-# Clear cache
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+COPY composer.json composer.lock ./
+RUN composer install --no-scripts --no-autoloader
 
-# Install PHP extensions
-RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+COPY . .
+RUN chmod +x artisan
 
-# Create system user to run Composer and Artisan Commands
-RUN useradd -G www-data,root -u $uid -d /home/$user $user
-RUN mkdir -p /home/$user/.composer && \
-    chown -R $user:$user /home/$user 
+RUN composer dump-autoload --optimize && composer run-script post-install-cmd
 
 
-# Set working directory
-WORKDIR /var/www
-# Install composer
-COPY --from=composer /usr/bin/composer /usr/bin/composer
-
+# Copia el resto del proyecto
+COPY . /var/www/html
 
 # Configura permisos
 RUN chown -R www-data:www-data /var/www/html \
