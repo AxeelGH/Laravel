@@ -1,25 +1,20 @@
-# Usa imagen oficial PHP con Apache
-FROM php:8.2-apache
+FROM php:8.2-apache as php
 
-# Instala dependencias del sistema y extensiones de PHP
-RUN apt-get update && apt-get install -y \
-    unzip \
-    git \
-    curl \
-    libpng-dev \
-    libonig-dev \
-    libxml2-dev \
-    libpq-dev \
-    && docker-php-ext-install pdo pdo_pgsql pdo_mysql mbstring exif pcntl bcmath gd \
-    && a2enmod rewrite
+RUN apt-get update -y
 
-# Copia solo archivos de Composer primero
+RUN apt-get install -y unzip libpq-dev libcurl4-gnutls-dev
+
+RUN docker-php-ext-install pdo pdo_mysql bcmath
+
+RUN apt-get install nano
+
+RUN curl -fsSL https://deb.nodesource.com/setup_16.x | bash - \
+
+&& apt-get install -y nodejs
+
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
 WORKDIR /var/www/html
-COPY composer.json composer.lock ./
-
-# Ejecuta Composer sin dev y con optimización
-# Forzando memoria ilimitada y emulated prepares
-RUN php -d memory_limit=-1 /usr/bin/composer install --no-dev --optimize-autoloader --prefer-dist
 
 # Copia el resto del proyecto
 COPY . /var/www/html
