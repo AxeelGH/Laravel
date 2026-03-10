@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Potion;
 use Illuminate\Http\Request;
+use Pest\Support\View;
+use phpDocumentor\Reflection\PseudoTypes\True_;
 
 class PotionController extends Controller
 {
@@ -56,5 +58,19 @@ class PotionController extends Controller
     {
         Potion::destroy($id);
         return response()->json(['message' => 'Potion deleted']);
+    }
+
+    public function getCurativePotions():\Illuminate\Database\Eloquent\Collection{
+        
+        return Potion::with(['ingredients', 'wizards'])
+            ->where('curative', true)
+            ->get();
+    }
+
+    public function getHighestLevelPotion():\Illuminate\Database\Eloquent\Collection{
+
+        return Potion::with(['ingredients' ,  'wizards'])
+        ->where('magic_level_required', max(array $magic_level_required))
+        ->get();
     }
 }
