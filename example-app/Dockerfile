@@ -1,35 +1,25 @@
 # Usa imagen oficial PHP con Apache
 FROM php:8.2-apache
 
-RUN apk update && apk add curl && \
-  curl -sS https://getcomposer.org/installer | php \
-  && chmod +x composer.phar && mv composer.phar /usr/local/bin/composer
+# Instala dependencias del sistema y extensiones de PHP
+RUN apt-get update && apt-get install -y \
+    unzip \
+    git \
+    curl \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    libpq-dev \
+    && docker-php-ext-install pdo pdo_pgsql pdo_mysql mbstring exif pcntl bcmath gd \
+    && a2enmod rewrite
 
-RUN apk --no-cache add --virtual .build-deps $PHPIZE_DEPS \
-  && apk --no-cache add --virtual .ext-deps libmcrypt-dev freetype-dev \
-  libjpeg-turbo-dev libpng-dev libxml2-dev msmtp bash openssl-dev pkgconfig \
-  && docker-php-source extract \
-  && docker-php-ext-configure gd --with-freetype-dir=/usr/include/ \
-                                   --with-png-dir=/usr/include/ \
-                                   --with-jpeg-dir=/usr/include/ \
-  && docker-php-ext-install gd mcrypt mysqli pdo pdo_mysql zip opcache \
-  && pecl install mongodb redis xdebug \
-  && docker-php-ext-enable mongodb \
-  && docker-php-ext-enable redis \
-  && docker-php-ext-enable xdebug \
-  && docker-php-source delete \
-  && apk del .build-deps
-
+# Copia solo archivos de Composer primero
 WORKDIR /var/www/html
-
 COPY composer.json composer.lock ./
-RUN composer install --no-scripts --no-autoloader
 
-COPY . .
-RUN chmod +x artisan
-
-RUN composer dump-autoload --optimize && composer run-script post-install-cmd
-
+# Ejecuta Composer sin dev y con optimización
+# Forzando memoria ilimitada y emulated prepares
+RUN php -d memory_limit=-1 /usr/bin/composer install --no-dev --optimize-autoloader --prefer-dist
 
 # Copia el resto del proyecto
 COPY . /var/www/html
