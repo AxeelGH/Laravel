@@ -20,7 +20,7 @@ COPY . /var/www/html
 
 # Instala dependencias de Laravel
 WORKDIR /var/www/html
-RUN composer install --no-dev --optimize-autoloader
+RUN composer install --no-dev --working-dir=/var/www/html
 
 # Configura permisos
 RUN chown -R www-data:www-data /var/www/html \
