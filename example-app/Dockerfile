@@ -16,7 +16,7 @@ RUN apt-get update && apt-get install -y \
 # Copia solo archivos de Composer primero
 WORKDIR /var/www/html
 COPY composer.json composer.lock ./
-
+ENV COMPOSER_ALLOW_SUPERUSER 1
 # Ejecuta Composer sin dev y con optimización
 # Forzando memoria ilimitada y emulated prepares
 RUN php -d memory_limit=-1 /usr/bin/composer install --no-dev --optimize-autoloader --prefer-dist
