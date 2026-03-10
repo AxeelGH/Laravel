@@ -12,7 +12,7 @@ class IngredientController extends Controller
      */
     public function index()
     {
-        return Ingredient:: with("potions", "wizards")->get();
+        return Ingredient:: with("potions")->get();
     }
 
     /**
@@ -34,7 +34,7 @@ class IngredientController extends Controller
      */
     public function show(string $id)
     {
-        return Ingredient::with('potions', 'wizards')->findOrFail($id);
+        return Ingredient::with('potions')->findOrFail($id);
     }
 
     /**

@@ -12,7 +12,7 @@ class WizardController extends Controller
      */
     public function index()
     {
-        return Wizard::with("ingredients", "potions")->get();
+        return Wizard::with( "potions")->get();
     }
 
     /**
@@ -34,7 +34,7 @@ class WizardController extends Controller
      */
     public function show(string $id)
     {
-        return Wizard::with('potions', 'ingredients')->findOrFail(($id));
+        return Wizard::with('potions')->findOrFail(($id));
     }
 
     /**

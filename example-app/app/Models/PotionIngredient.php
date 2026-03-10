@@ -12,5 +12,5 @@ class PotionIngredient extends Model
     protected $table = 'potions_ingredients';
     public $timestamps = false;
 
-    protected $fillable = ['potion_id', 'ingredient_id', 'qty'];
+    protected $fillable = ['ingredient_id', 'potion_id', 'qty'];
 }
